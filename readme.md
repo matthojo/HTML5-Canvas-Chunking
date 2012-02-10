@@ -1,10 +1,11 @@
 # [HTML5 Canvas Chunking](http://labs.matthojo.co.uk/canvasChunking/)
 
 Automatically chunks out specified area and allows for markers to be placed into chunks (maybe for mapping, etc.). It also only renders chunks within the Canvas frame itself, which keeps performance high.
+
 *Example*
 
-800 x 600 w/ 20 markers :: 60+ FPS
-8000 x 6000 w/ 1000 markers :: 60+ FPS (Possible slight drop at maybe 1FPS in some browsers).
+* 800 x 600 w/ 20 markers :: 60+ FPS
+* 8000 x 6000 w/ 1000 markers :: 60+ FPS (Possible slight drop at maybe 1FPS in some browsers).
 
 
 ## Features
