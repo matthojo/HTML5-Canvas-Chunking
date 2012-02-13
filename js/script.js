@@ -82,7 +82,9 @@ $(document).ready(function () {
     }, 1000 / 60);
 
 
-    // Canvas Settings
+    /**
+     * Canvas settings
+     */
     var canvas = $("#myCanvas");
     var context = canvas.get(0).getContext("2d");
     var canvasWidth = 400;
@@ -91,17 +93,38 @@ $(document).ready(function () {
     canvas.attr("width", canvasWidth);
     canvas.attr("height", canvasHeight);
 
+    /**
+     * Content & Chunk settings
+     */
     var contentWidth = 800, contentHeight = 600;
     var chunkSize = 50;
 
+    /**
+     * Movement settings
+     */
     var canX, canY, mouseIsDown = 0, mouseDownX, mouseDownY, mouseUpX, mouseUpY;
+    var rightKey = false, leftKey = false, upKey = false, downKey = false;
     var offsetX;
     var offsetY;
+
+    /**
+     * Adjustable options
+     */
     var moveFriction = 1;
+    var keyOffset = 20;
     var debug = false;
-    // Classes
+
+
+    /**
+     * Classes
+     */
     var Chunk, Marker;
 
+    /**
+     * Chunk class
+     * @param x
+     * @param y
+     */
     Chunk = function(x,y){
         this.settings = {x: x, y: y};
         this.markers = [];
@@ -129,6 +152,11 @@ $(document).ready(function () {
         }
     };
 
+    /**
+     * Marker class, both X & Y should be relative to chunk its in.
+     * @param posX
+     * @param posY
+     */
     Marker = function(posX, posY){
         this.options = {color:"#88CCFF", size:10};
         this.posX = posX;
@@ -143,8 +171,6 @@ $(document).ready(function () {
     };
 
     var chunks = [];
-    //console.log(canvasWidth / chunkSize);
-    //console.log(canvasHeight / chunkSize);
     for (var x = 0; x < contentWidth; x+=chunkSize) {
         // ADD ROWS
         for (var y = 0; y < contentHeight; y+=chunkSize) {
@@ -162,16 +188,32 @@ $(document).ready(function () {
         chunks[chunkNumber].markers.push(new Marker(x, y));
     }
 
+    // Output chunk count
+    if(debug) console.log(chunks.length);
 
-    console.log(chunks.length);
-
+    /**
+     * Draws everything together.
+     */
     function draw() {
         context.save();
         context.clearRect(0, 0, canvasWidth, canvasHeight);
         context.restore();
 
+        if (rightKey) {
+            offsetX = keyOffset;
+        }
+        if (leftKey) {
+            offsetX = -keyOffset;
+        }
+        if (upKey) {
+            offsetY = -keyOffset;
+        }
+        if(downKey){
+            offsetY = keyOffset;
+        }
+
         context.save();
-        if(mouseIsDown){
+        if(mouseIsDown || rightKey || leftKey || upKey || downKey){
 
             for(var i=0;i<chunks.length;i++){
                 var chunk = chunks[i];
@@ -191,10 +233,19 @@ $(document).ready(function () {
         showPos();
     }
 
+    /**
+     * Generate a random number between 2 numbers.
+     * @param from
+     * @param to
+     */
     function randomFromTo(from, to) {
         return Math.floor(Math.random() * (to - from + 1) + from);
     }
 
+    /**
+     * When the mouse press is up, store the values of x & y of the action.
+     * @param e
+     */
     function mouseUp(e) {
         if (!e) var e = event;
         mouseIsDown = 0;
@@ -202,6 +253,11 @@ $(document).ready(function () {
         mouseUpY = e.pageY - document.getElementById("myCanvas").offsetTop;
         mouseXY(e);
     }
+
+    /**
+     * If mouse press is down, make store x & y of press.
+     * @param e
+     */
     function mouseDown(e) {
         if (!e) var e = event;
         mouseIsDown = 1;
@@ -209,6 +265,11 @@ $(document).ready(function () {
         mouseDownY = e.pageY - document.getElementById("myCanvas").offsetTop;
         mouseXY(e);
     }
+
+    /**
+     * If the mouse moves, get the offset of the mouse movement.
+     * @param e
+     */
     function mouseXY(e) {
         if (!e) var e = event;
         canX = e.pageX - document.getElementById("myCanvas").offsetLeft;
@@ -222,6 +283,32 @@ $(document).ready(function () {
         showPos();
     }
 
+    /**
+     * Mark the key pressed true.
+     * @param evt
+     */
+    function onKeyDown(evt) {
+        evt.preventDefault();
+        if (evt.keyCode == 39) rightKey = true;
+        else if (evt.keyCode == 37) leftKey = true;
+        if (evt.keyCode == 38) upKey = true;
+        else if (evt.keyCode == 40) downKey = true;
+    }
+
+    /**
+     * Mark the key released false.
+     * @param evt
+     */
+    function onKeyUp(evt) {
+        if (evt.keyCode == 39) rightKey = false;
+        else if (evt.keyCode == 37) leftKey = false;
+        if (evt.keyCode == 38) upKey = false;
+        else if (evt.keyCode == 40) downKey = false;
+    }
+
+    /**
+     * If debug mode is on show the x & y of the mouse and an indicator showing where it is.
+     */
     function showPos() {
         if(debug){
             // large, centered, bright green text
@@ -239,6 +326,10 @@ $(document).ready(function () {
         }
     }
 
+    /**
+     * Floors a number with better performance the Math.Floor().
+     * @param number
+     */
     function bitwiseRound(number){
         var rounded = ~~ (0.5 + number);
         return rounded;
@@ -248,6 +339,8 @@ $(document).ready(function () {
             document.getElementById("myCanvas").addEventListener("mousedown", mouseDown, false);
             document.getElementById("myCanvas").addEventListener("mousemove", mouseXY, false);
             document.body.addEventListener("mouseup", mouseUp, false);
+            $(document).keydown(onKeyDown);
+            $(document).keyup(onKeyUp);
     });
 
     $(window).resize(draw);

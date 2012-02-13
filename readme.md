@@ -15,6 +15,7 @@ Automatically chunks out specified area and allows for markers to be placed into
 * Add markers relative to chunk (e.g a marker at x:10, y:10 will be at those co-ordinates inside the chunk, not the canvas.)
 * Only renders chunks within canvas frame (with 1 chunk outside for smooth panning of chunks).
 * You can pan the content to reveal more chunks and their markers.
+* Mouse and Keyboard Controls
 
 
 ## Special Thanks
