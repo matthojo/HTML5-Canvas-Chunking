@@ -112,7 +112,18 @@ $(document).ready(function () {
      */
     var moveFriction = 1;
     var keyOffset = 20;
+    var zoomMultiplier = 10;
+    var zoomAmmount = 0.20;
+    var zoom;
+    var scale = 1;
+    var originx = 0;
+    var originy = 0;
     var debug = false;
+
+    /**
+     * Setup other settings
+     */
+    zoom_options();
 
 
     /**
@@ -148,7 +159,28 @@ $(document).ready(function () {
         };
         this.checkEdge = function () {
             // Check Chunk is in canvas frame with 1 chunk excess.
-            return !(this.settings.y >= canvasHeight + chunkSize || this.settings.x >= canvasWidth + chunkSize || this.settings.y <= 0 - chunkSize || this.settings.x <= 0 - chunkSize);
+            var addX = 0, addY = 0, minusX = 0, minusY = 0;
+
+            if(originy < 0)addY = 0;
+            else if(Math.abs(originy) > canvasHeight) addY = canvasHeight;
+            else addY = Math.abs(originy);
+
+            if(originx < 0)addX = 0;
+            else if(Math.abs(originx) > canvasWidth) addX = canvasWidth;
+            else addX = Math.abs(originx);
+
+            if(originx > 0) minusX = 0;
+            else if(originx < -canvasWidth) minusX = -canvasWidth;
+            else if(originx > canvasWidth) minusX = canvasWidth;
+            else minusX = originx;
+
+            if(originy > 0) minusY = 0;
+            else if(originy < -canvasHeight) minusY = -canvasHeight;
+            else if(originy > canvasHeight) minusY = canvasHeight;
+            else minusY = originy;
+
+            return !(this.settings.y*zoom >= (canvasHeight+addY)+(chunkSize*zoom) || this.settings.x*zoom >= (canvasWidth+addX)+(chunkSize*zoom) || this.settings.y*zoom <= minusY - (chunkSize*zoom) || this.settings.x*zoom <= minusX - (chunkSize*zoom));
+            //return true;
         }
     };
 
@@ -213,12 +245,21 @@ $(document).ready(function () {
         }
 
         context.save();
+        context.translate(
+            originx,
+            originy
+        );
+        context.scale(zoom,zoom);
+        context.translate(
+            -( (canvasWidth/2) / scale + originx - (canvasWidth/2)/ ( scale * zoom ) ),
+            -( (canvasHeight/2) / scale + originy - (canvasHeight/2) / ( scale * zoom ) )
+        );
         if(mouseIsDown || rightKey || leftKey || upKey || downKey){
 
             for(var i=0;i<chunks.length;i++){
                 var chunk = chunks[i];
-                chunk.settings.x += bitwiseRound(offsetX / moveFriction);
-                chunk.settings.y += bitwiseRound(offsetY / moveFriction);
+                chunk.settings.x += bitwiseRound((offsetX / moveFriction)/zoom);
+                chunk.settings.y += bitwiseRound((offsetY / moveFriction)/zoom);
                 if(chunk.checkEdge()) chunk.draw();
             }
             offsetX = 0;
@@ -306,6 +347,37 @@ $(document).ready(function () {
         else if (evt.keyCode == 40) downKey = false;
     }
 
+    function zoom_in() {
+        zoomMultiplier++;
+        zoom_options();
+    }
+    function zoom_out() {
+        if(zoom > zoomAmmount && zoomMultiplier > 0){
+            zoomMultiplier--;
+            zoom_options();
+        }
+    }
+    function zoom_normal(){
+        zoomMultiplier = 10;
+        originx = 0;
+        originy = 0;
+        scale = 1;
+        zoom_options();
+    }
+    function zoom_options(){
+        //Update Zoom
+        zoom = zoomMultiplier/10;
+        originx = (canvasWidth/2) / scale + originx - (canvasWidth/2)/ ( scale * zoom );
+        originy = (canvasHeight/2) / scale + originy - (canvasHeight/2) / ( scale * zoom );
+        scale *= zoom;
+        if(debug){
+            console.log("Zoom: "+zoom);
+            console.log("originx: "+originx);
+            console.log("originy: "+originy);
+            console.log("Scale: "+scale);
+        }
+    }
+
     /**
      * If debug mode is on show the x & y of the mouse and an indicator showing where it is.
      */
@@ -336,11 +408,14 @@ $(document).ready(function () {
     }
 
     $(document).ready(function () {
-            document.getElementById("myCanvas").addEventListener("mousedown", mouseDown, false);
-            document.getElementById("myCanvas").addEventListener("mousemove", mouseXY, false);
-            document.body.addEventListener("mouseup", mouseUp, false);
-            $(document).keydown(onKeyDown);
-            $(document).keyup(onKeyUp);
+        document.getElementById("myCanvas").addEventListener("mousedown", mouseDown, false);
+        document.getElementById("myCanvas").addEventListener("mousemove", mouseXY, false);
+        document.body.addEventListener("mouseup", mouseUp, false);
+        $(document).keydown(onKeyDown);
+        $(document).keyup(onKeyUp);
+        $(".zoom_in").on("click", zoom_in);
+        $(".zoom_out").on("click", zoom_out);
+        $(".zoom_normal").on("click", zoom_normal);
     });
 
     $(window).resize(draw);
